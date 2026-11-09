@@ -1,0 +1,66 @@
+#!/system/bin/sh
+# META-INF/com/google/android/update-binary
+#
+# Magisk's module ZIP interface is: this file is executed as
+#     update-binary <api> <tmpdir> <zipfile>
+# and META-INF/com/google/android/updater-script must start with the line "#MAGISK".
+#
+# THIS IS OUR OWN RE-IMPLEMENTATION. Magisk's template update-binary and its util_functions.sh are not
+# present on the machine that built this module and the offline rule forbids downloading them, so this
+# script cannot be claimed compatible with every Magisk version. It is deliberately conservative:
+# if anything it needs is missing it prints the drop-in alternative instead of half-installing.
+# The path this project actually tested end to end is tools/magisk_deploy.sh, which copies the module
+# directory into /data/adb/modules and needs no installer ABI at all.
+
+umask 022
+API="$1"
+TMP="$2"
+ZIP="$3"
+[ -n "$TMP" ] && [ -n "$ZIP" ] || { echo "usage: update-binary <api> <tmpdir> <zip>"; exit 1; }
+
+MODID=
+for c in unzip busybox; do command -v $c >/dev/null 2>&1 && UNZIP="$c" && break; done
+if [ -n "${UNZIP:-}" ] && [ "$UNZIP" = unzip ]; then EX="unzip"; else EX="busybox unzip"; fi
+have() { command -v "$1" >/dev/null 2>&1; }
+
+if ! have unzip; then
+    echo "This recovery has no 'unzip'. Magisk normally supplies its own extractor for the template"
+    echo "update-binary, which this module does not embed (see the comment above)."
+    echo "Install the module from its directory instead:"
+    echo "    sh /sdcard/Download/magisk_deploy.sh --install --i-reviewed"
+    exit 1
+fi
+
+WORK="$TMP/webview138-replacement-stage"
+rm -rf "$WORK" 2>/dev/null
+mkdir -p "$WORK" || { echo "cannot create $WORK"; exit 1; }
+unzip -o -q "$ZIP" -d "$WORK" || { echo "unzip failed"; exit 1; }
+
+SRC="$WORK/webview138-replacement"
+[ -d "$SRC" ] || SRC="$WORK"
+[ -f "$SRC/module.prop" ] || { echo "module.prop not found in the archive layout"; exit 1; }
+MODID=$(sed -n 's/^id=//p' "$SRC/module.prop" | head -1)
+[ "$MODID" = "webview138-replacement" ] || { echo "bad id '$MODID'"; exit 1; }
+
+# The Magisk installer contract: MODPATH is the live module directory, customize.sh runs inside it.
+MODDIR="/data/adb/modules/$MODID"
+[ -d /data/adb/modules ] || { echo "/data/adb/modules absent: Magisk is not installed/enabled here."; echo "refusing to create it - use the Magisk app to install Magisk first."; exit 1; }
+
+mkdir -p "$MODDIR" || { echo "cannot create $MODDIR"; exit 1; }
+# copy, never move, so a failed install leaves the archive intact for a retry
+cp -a "$SRC/." "$MODDIR/" || { echo "copy into $MODDIR failed"; exit 1; }
+
+export MODPATH="$MODDIR"
+export API ZIPFILE="$ZIP"
+if [ -f "$MODDIR/customize.sh" ]; then
+    . "$MODDIR/customize.sh"
+    rc=$?
+    [ $rc -eq 0 ] || { echo "customize.sh refused the install (rc=$rc)"; rm -rf "$MODDIR"; exit $rc; }
+fi
+
+# Magisk removes a module by these markers; a fresh install must not carry an old one.
+rm -f "$MODDIR/remove" "$MODDIR/disabled"
+touch "$MODDIR/update" 2>/dev/null
+sync
+echo "Installed webview138-replacement into $MODDIR. REBOOT for it to take effect (no flash, no partition write)."
+exit 0

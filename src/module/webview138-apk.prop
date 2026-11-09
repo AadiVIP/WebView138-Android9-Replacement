@@ -1,0 +1,12 @@
+# what this module expects the replacement package to be, MEASURED from the APK
+# (tools/build_magisk.py reads this out of the package; nothing here is typed in)
+webview_apk_path=input/webview138_arm64_universal_138.0.7204.179.apk
+webview_apk_package=com.google.android.webview
+webview_apk_versionName=138.0.7204.179
+webview_apk_versionCode=720417901
+webview_apk_minSdkVersion=26
+webview_apk_maxSdkVersion=28
+webview_apk_targetSdkVersion=35
+webview_apk_abis=arm64-v8a,armeabi-v7a
+webview_apk_sha256=39f8eee7b6a4588c55e9299f95bfdff0c0943414bf468241becd0ed588e444a0
+webview_apk_bytes=222218902

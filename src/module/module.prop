@@ -1,0 +1,6 @@
+id=webview138-replacement
+name=Google WebView 138 provider registration (Android 9)
+version=v1.0
+versionCode=1
+author=qoder
+description=Systemless static RRO that registers the Google-signed WebView 138.0.7204.179 as the default Android 9 WebView provider. Touches no signed framework resource. Reversible.

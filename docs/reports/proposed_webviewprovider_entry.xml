@@ -1,0 +1,52 @@
+<!-- Android 9 res/xml/config_webview_packages.xml addition.
+     Generated from the ACTUAL signer certificate of input/webview138.apk
+     (APK Signing Block v2/v3 pair 0x7109871a, 959-byte DER -> work/V2_cert.der).
+     cert SHA-1   : 1F387CB25E0069EFCA490ADE28C060E09D37DD45
+     cert SHA-256 : 6FAF3C4140407473400934D117815A21AF1CFEFC5C0BEE61C858BC3D72BA6FE5
+     DER length   : 959 bytes (base64: 1280 chars, single line)
+     Round-trip base64->DER->base64 asserted on generation.
+
+     GRAMMAR SOURCE: frameworks/base/services/core/java/com/android/server/webkit/
+       SystemImpl.java:57-64 (tokens), :84-120 (attributes, required packageName+description),
+       :168-181 (readSignatures -> parser.nextText()),
+       WebViewProviderInfo.java:42 (new Signature(Base64.decode(text, Base64.DEFAULT))).
+     Consequences: 'description' and 'packageName' are MANDATORY (missing either one throws
+     AndroidRuntimeException inside the system server -> boot loop); the base64 must be ONE
+     continuous line with no internal whitespace and NO space between the tags and the text.
+
+     This is variant A: declares <signature>, therefore per WebViewUpdater.java:506-521 the
+     package does NOT need FLAG_SYSTEM. Once framework-res.apk carries this entry, every later
+     WebView change is a normal `adb install` needing no platform key.
+-->
+<webviewprovider description="Google WebView" packageName="com.google.android.webview" availableByDefault="true"><signature>MIIDuzCCAqOgAwIBAgIJANi6DgBQG4ZTMA0GCSqGSIb3DQEBBQUAMHQxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKDAtHb29nbGUgSW5jLjEQMA4GA1UECwwHQW5kcm9pZDEQMA4GA1UEAwwHd2VidmlldzAeFw0xNDA4MDgyMzIwMjBaFw00MTEyMjQyMzIwMjBaMHQxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKDAtHb29nbGUgSW5jLjEQMA4GA1UECwwHQW5kcm9pZDEQMA4GA1UEAwwHd2VidmlldzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMbtaFX0r5aZJMAbPVMAgK1ZZ29dTn91VsGxXv2hqrQo7IpqEy2JmPvPnoMsSiuTAe+UcQy8oKDQ2aYVSAd1DGIy+nSRyFTt3LSIAdwSBkB1qT4a+OqkpsR6bSNXQXQ18lCQu9gREY3h3QlYBQAyzRxw4hRGlrXAzuSz1Ec4W+6x4nLG5DG61MAMR8ClF9XSqbmGB3kyZ70A0X9OPYYxiMWP1ExaYvpaVqjyZZcrPwr+vtW8oCuGBUtHpBUH3OoG+9s2YMcgLG7vCK9awKDqlPcJSpIAAj6uGs4gORmkqxZRMskLSTWbhP4p+3Ap8jYzTVB6Y1/DMVmYTWRMcPW0macCAwEAAaNQME4wHQYDVR0OBBYEFJ6bAR6/QVm4w9LRSGQiaR5Rhp3TMB8GA1UdIwQYMBaAFJ6bAR6/QVm4w9LRSGQiaR5Rhp3TMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADggEBAEQu8QiVxax7/diEiJrgKE1LwdXsIygJK/KnaKdnYEkAQpeu/QmrLiycm+OFbL1qHJIB7OuI/PQBUtcaNSiJSCVgtwtEbZWWIdsynqG/Nf4aGOndXegSQNRH54M05sRHLoeRycPrY7xQlEwGikNFR76+5UdwFBQI3Gn22g6puJnVukQm/wXQ+ajoiS4QclrNlixoDQsZ4STLH4+Wju2wIWKFFArIhVEIlbamq+p6BghuzH3aIz/Fy0YTQKi7SA+0fuNeCaqlSm5pYSt6p5CH89y1Fr+wFc5r3iLRnUwRcy08ESC7bZJnxV3d/YQ5valTxBbzku/dQbXVj/xg69H8l8M=</signature></webviewprovider>
+
+<!-- variant B: no <signature> child. WebViewUpdater.java:512-514 then requires
+     packageInfo.applicationInfo.isSystemApp(), so the APK MUST live in the system partition
+     (/system/app/... with FLAG_SYSTEM). Use this only if the guest's /system is writable and
+     the image is being rebuilt for real; it is otherwise the more fragile choice.
+<webviewprovider description="Google WebView" packageName="com.google.android.webview" availableByDefault="true" />
+-->
+
+<!--
+PLACEMENT / SELECTION (WebViewUpdater.java:261-277 walks providers in XML DOCUMENT ORDER with no
+sort; :285-315 then returns Settings.Global.WEBVIEW_PROVIDER if set, else the FIRST valid entry
+marked availableByDefault):
+  * To make Google WebView the automatic choice after boot, put the new <webviewprovider> element
+    BEFORE the existing com.android.webview element, or
+  * leave the order alone and set the key after boot:
+      adb shell settings put global webview_provider com.google.android.webview
+    (Developer Options writes this same key: SystemImpl.java:190-198).
+  * Do NOT leave an entry naming a package that is not installed and enabled for all users:
+    selection falls through to WebViewPackageMissingException
+    ("Could not find a loadable WebView package", WebViewUpdater.java:312-316) whose upstream
+    comment reads "This should never happen during normal operation (only with modified system
+    images)". That is exactly this case.
+  * Do not add isFallback="true" as a way to be safer: on Android 9 the selection loop tests only
+    availableByDefault (:306-307), and a fallback must also be availableByDefault or the parser
+    throws (SystemImpl.java:111-121).
+
+NOT YET DONE: this entry has not been applied to any framework-res.apk, and no such file was
+modified or flashed. It is untested against the real ROM's XML, which is inside the encrypted
+payload. Apply only after framework-res.apk is read from the guest and its signer identified.
+
+-->

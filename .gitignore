@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# build scratch / rebuild intermediates (inputs live in src/inputs, artifacts in output/)
+work/
+
+# large proprietary inputs — never commit (see README "exclusions")
+input/
+*.rom
+rom*.zip
+
+# on-device module runtime state (created only in /data/adb/modules on a guest)
+boot-verify.log
+boot-verify.log.old
+installed-overlay.sha256
+pref-backup
+no-pin
+auto-install
+disabled
+remove
+update
+
+# local staging of the proprietary 222 MB Google package (obtain via tools/download_webview_apk.sh)
+# (the small webview138-provider-overlay.apk in output/ and src/module/ is OUR overlay, not ignored)
+webview138_arm64*.apk

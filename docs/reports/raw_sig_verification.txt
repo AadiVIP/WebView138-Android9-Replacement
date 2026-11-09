@@ -1,0 +1,19 @@
+X.509 v3  serial=0xd8ba0e00501b8653
+  issuer : ['US1', 'California1', 'Mountain View1', 'Google Inc.1', 'Android1', 'webview']
+  subject: ['US1', 'California1', 'Mountain View1', 'Google Inc.1', 'Android1', 'webview']
+  validity: ? -> ?
+  key: RSA-2048 e=65537
+  DER 959 bytes  SHA-1=1F387CB25E0069EFCA490ADE28C060E09D37DD45
+                     SHA-256=6FAF3C4140407473400934D117815A21AF1CFEFC5C0BEE61C858BC3D72BA6FE5
+  self-signature verify with sha1: True  EM=0001ffffffffffffffffffff..a60eb02181a6d9e115ac2e35361d49ba6934b7d0
+  (cert signatureAlgorithm OID 1.2.840.113549.1.1.5 = sha1WithRSAEncryption)
+  validity: ? -> ?
+
+### V2: signedData 1039B, parts=[1035, 268, 294]
+  signer publicKey RSA-2048  matches cert key: True
+  signature[0] algId=0x00000103 len=256
+    over signedData incl. length prefix  : no  0001ffffffffffffffffffff..f4cfdd7218bec06d2ce80856ec0477e5f9a4266c
+    over signedData content only         : VALID  0001ffffffffffffffffffff..f4cfdd7218bec06d2ce80856ec0477e5f9a4266c
+
+### V3: signedData 1031B, parts=[1027, 24]
+  signer publicKey RSA-2048  matches cert key: True

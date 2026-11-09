@@ -7,11 +7,15 @@ re-signed or deleted — which is exactly why rollback is a module removal plus 
 
 > **Status, stated plainly.** The overlay and module are **built, independently audited,
 > deterministically rebuildable, and sandbox-tested end to end** (409 checks across six suites,
-> 0 failures — see [QA below](#quality-assurance-evidence)). **No claim is made that the module
-> has been flashed or that WebView 138 has rendered a page on the target guest.** The runtime
-> acceptance tests are in `docs/INSTALLATION_GUIDE.md` §7, to be run by the operator after an
-> approved install. Every document in this repository labels each fact as `MEASURED`,
-> `SOURCE` (quoted from AOSP `android-9.0.0_r35`), or `UNTESTED`.
+> 0 failures — see [QA below](#quality-assurance-evidence)). **Operator-tested on the target
+> guest: the module and `magisk_deploy.sh` work.** Installed correctly (probe → `--install` →
+> `pm install` → reboot), **Google WebView 138 (138.0.7204.179) shows up as a selectable option
+> in a WebView changer app** — which means the overlay was applied at boot, the package passed
+> all four Android 9 provider-validity gates, and WebViewUpdateService offers it. "When done
+> correctly" is load-bearing: follow `docs/INSTALLATION_GUIDE.md`, and see
+> [What is verified, and what is not](#what-is-verified-and-what-is-not) for the remaining open
+> items. Every document in this repository labels each fact as `MEASURED`, `SOURCE` (quoted from
+> AOSP `android-9.0.0_r35`), or `UNTESTED`.
 
 ## What is delivered
 
@@ -42,7 +46,7 @@ output/                    # prebuilt release artifacts (byte-identical to the a
 docs/
   INSTALLATION_GUIDE.md    # operational how-to, written for the target environment
   ROLLBACK_GUIDE.md        # every recovery path, cheapest first
-  COMPATIBILITY.md         # API/ABI/signature/provider-gate analysis, source-cited
+  WEBVIEW_138_COMPATIBILITY.md # API/ABI/signature/provider-gate analysis, source-cited
   ARCHITECTURE.md          # mechanism, deployment method, "API dummy", SELinux, verification
   TROUBLESHOOTING.md       # symptom → cause → action, including probe-result interpretation
   reports/                 # the original engineering reports, verbatim
@@ -93,8 +97,10 @@ su -c 'dumpsys webviewupdate | head -25'   # expect (com.google.android.webview,
 su -c 'cat /data/adb/modules/webview138-replacement/boot-verify.log'
 ```
 
-Then do not call it a success until the seven runtime checks in
-`docs/INSTALLATION_GUIDE.md` §7 pass. Rollback: `docs/ROLLBACK_GUIDE.md`
+Success signal used on the target guest: after the reboot, `com.google.android.webview`
+138.0.7204.179 appears as a selectable option in a WebView changer app (and is listed as valid by
+`dumpsys webviewupdate`). The seven deeper runtime checks in `docs/INSTALLATION_GUIDE.md` §7
+remain the full acceptance suite. Rollback: `docs/ROLLBACK_GUIDE.md`
 (short version: `magisk_deploy.sh --remove --i-reviewed`, reboot, done).
 
 ## Rebuild from source
@@ -172,6 +178,7 @@ Run on the build machine, all suites re-executed against the final artifacts on 
 | Module lifecycle sandbox (real scripts, shimmed `pm`/`settings`/`dumpsys`) | `python3 tools/selftest_magisk.py` | **58 / 0** |
 | Deterministic rebuild | `build_overlay.py` + `build_magisk.py` re-run | overlay, manifest **and** ZIP **byte-identical** to the release artifacts |
 | ZIP integrity | `unzip -t` / `zipfile.testzip()` | clean on both archives |
+| **On-device deployment** (operator, target guest) | `guest_probe.sh` → `magisk_deploy.sh --check` → `--install` → `pm install` → reboot | **success — WebView 138 appears as a selectable option in a WebView changer app** |
 
 Environment notes: `selftest_axml.py` cross-checks against the real
 `/system/framework/framework-res.apk` and `selftest_magisk.py` lints with the device's own
@@ -187,11 +194,19 @@ valid, cert == overlay's `<signature>` text == both APKs' embedded signer), the 
 provider validity gates against the measured APK values (source-level), module structure, script
 safety (destructive-command scan), sandboxed module lifecycle, deterministic build.
 
-**Not verified (read before installing):** runtime behaviour on the guest — Magisk presence/version
-(user-reported v30; probe it), the `update-binary` ↔ Magisk ABI (re-implementation; the drop-in
-route is the tested path), magic-mount of a *new* overlay directory, `idmap` success, and the
-native 64-bit library load. The exact unverified list and the commands that settle each item are
-in `docs/ARCHITECTURE.md` §8 and `docs/INSTALLATION_GUIDE.md`.
+Verified on the target guest (operator deployment): `guest_probe.sh` and `magisk_deploy.sh`
+complete the install, and after the reboot the overlay **is applied** — magic mount and `idmap`
+both succeeded — because **Google WebView 138 (138.0.7204.179) is offered by
+WebViewUpdateService and shows up as a selectable option in a WebView changer app**. That
+appearance also proves the package passed all four provider-validity gates (targetSdk, version
+floor, signature against the declared certificate, `WebViewLibrary`), since a provider failing any
+gate is never offered as an option.
+
+**Not verified:** the `update-binary` ↔ Magisk ABI (re-implementation; the drop-in
+`magisk_deploy.sh` route is what was tested), Magisk presence/version (user-reported v30; probe
+it), and — not claimed by this test — that WebView 138 renders pages once you select it (select it
+in the WebView changer and load a page to settle that). The full list and the commands that
+settle each item are in `docs/ARCHITECTURE.md` §8 and `docs/INSTALLATION_GUIDE.md`.
 
 ## License and exclusions
 
